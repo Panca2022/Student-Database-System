@@ -1,28 +1,10 @@
-# Student management system Project in Python with SQLite Database
 
-**Step 1: Install Python** 
-
-**Step 2: Install Pycharm | Create Project | Install Library**
-
-**Step 3: Create Project** 
-
-**Step 4: Create Python file**
-
-**Step 5: Code Explanation**: To explain the code i have divided it different part and now i am going to explain each part one by one
-
-**import library:** Here in this step we will import the needed library that will be used to create Student Management System.
-```python
 #import libraries
 from tkinter import *
 import tkinter.ttk as ttk
 import tkinter.messagebox as tkMessageBox
 import sqlite3
-```
-Here as you can see that there are three libraries are imported in which tkinter library is using to create a GUI window , tkinter.messagebox library is using to display message in Popup box and sqlite3 library is using to handle SQLite database.
 
-**Create Database and Table:**  I have defined a function with name Database() to create database and table. Here is the following code to create database and table.
-
-```python
 #function to define database
 def Database():
     global conn, cursor
@@ -32,12 +14,7 @@ def Database():
     #creating STUD_REGISTRATION table
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS STUD_REGISTRATION (STU_ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, STU_NAME TEXT, STU_CONTACT TEXT, STU_EMAIL TEXT, STU_ROLLNO TEXT, STU_BRANCH TEXT)")
-```
-Here in the above program database name is  student and table name is STUD_REGISTRATION. The fields of table STUD_REGISTRATION are STU_ID , STU_NAME, STU_CONTACT, STU_EMAIL, STU_ROLLNO AND STU_BRANCH
 
-**Create GUI Window :**I have used four frame to create this Graphical user interface form in which first frame for Heading, second frame for Registration form, third frame for search window and the last frame for displaying students records. Here is the complete code to create GUI of this application.
-
-```python
 #defining function for creating GUI Layout
 def DisplayForm():
     #creating window
@@ -45,8 +22,7 @@ def DisplayForm():
     #setting width and height for window
     display_screen.geometry("900x400")
     #setting title for window
-    display_screen.title("SAMIR PAUL")
-    #declaring variables
+    display_screen.title("Student DataBase System")
     global tree
     global SEARCH
     global name,contact,email,rollno,branch
@@ -70,7 +46,7 @@ def DisplayForm():
     MidViewForm = Frame(display_screen, width=600)
     MidViewForm.pack(side=RIGHT)
     #label for heading
-    lbl_text = Label(TopViewForm, text="Student Management System", font=('verdana', 18), width=600,bg="#1C2833",fg="white")
+    lbl_text = Label(TopViewForm, text="Student DataBase System", font=('Times New Roman', 18), width=600,bg="#1C2833",fg="white")
     lbl_text.pack(fill=X)
     #creating registration form in first left frame
     Label(LFrom, text="Name  ", font=("Arial", 12)).pack(side=TOP)
@@ -127,10 +103,6 @@ def DisplayForm():
     tree.column('#4', stretch=NO, minwidth=0, width=120)
     tree.pack()
     DisplayData()
-```
-**Insert Data into table:** I have defined a function with name register(). First it will open database by calling Database() function. Next i have passed all the forms data into Python variable. After that i have applied a empty validation and finally at last i have applied query to insert data into table then displayed data screen by calling DisplayData() function. Here is the complete code to insert data into table.
-
-```python
 #function to insert data into database
 def register():
     Database()
@@ -146,15 +118,13 @@ def register():
     else:
         #execute query
         conn.execute('INSERT INTO STUD_REGISTRATION (STU_NAME,STU_CONTACT,STU_EMAIL,STU_ROLLNO,STU_BRANCH) \
- VALUES (?,?,?,?,?)',(name1,con1,email1,rol1,branch1));
+              VALUES (?,?,?,?,?)',(name1,con1,email1,rol1,branch1));
         conn.commit()
         tkMessageBox.showinfo("Message","Stored successfully")
         #refresh table data
         DisplayData()
         conn.close()
-```
-**Reset Form:** I have defined a function Reset() and it will reset all the from data.
-```python
+
 def Reset():
     #clear current data from table
     tree.delete(*tree.get_children())
@@ -167,9 +137,6 @@ def Reset():
     email.set("")
     rollno.set("")
     branch.set("")
-```
-**Delete student record:** I have defined a function Delete() that will take the selected data and will delete it from database. Here is the complete code to delete selected data from database.
-```python
 def Delete():
     #open database
     Database()
@@ -187,9 +154,7 @@ def Delete():
             conn.commit()
             cursor.close()
             conn.close()
-```
-**Search student record:** I have defined a function SearchRecord() that will take the name of student and perform query to select the records of the given student and at last will populate it into the table format.
-```python
+
 #function to search data
 def SearchRecord():
     #open database
@@ -207,9 +172,6 @@ def SearchRecord():
             tree.insert('', 'end', values=(data))
         cursor.close()
         conn.close()
-```
-**Display student record:** I have defined a function DisplayData() that will fetch all the records from the database and display into the GUI in table format. Here is the complete code
-```python
 #defining function to access data from SQLite database
 def DisplayData():
     #open database
@@ -225,16 +187,9 @@ def DisplayData():
         tree.insert('', 'end', values=(data))
     cursor.close()
     conn.close()
-```
-**Step 6: Run Code**: To run this code just right click on the coding area and click on **Run Program** and you will get a output screen like below.
-<img width="821" alt="home" src="https://user-images.githubusercontent.com/77569653/213883145-88fc35b6-7596-4d92-b914-8ccb982b89dc.png">
 
-**Insert**:Here just fill the Student details and click on Submit button you will get a screen like below
-<img width="821" alt="insert" src="https://user-images.githubusercontent.com/77569653/213883162-9a30a7da-c62f-4122-b4e4-49e37d773273.png">
-
-**Search**: If you want to search record of any student then just fill his/her name in textbox and click on search button. For example here i am going to search student Samir's details
-<img width="824" alt="search" src="https://user-images.githubusercontent.com/77569653/213883189-99f5c42a-46cf-4b61-bd54-3a3cb354e26d.png">
-
-**Delete**:To delete record of any student just click on record to select and the click on delete button.
-<img width="823" alt="delete" src="https://user-images.githubusercontent.com/77569653/213883206-89694686-fadd-434a-ad0d-dd75fe3bb2ce.png">
-
+#calling function
+DisplayForm()
+if __name__=='__main__':
+#Running Application
+ mainloop()
