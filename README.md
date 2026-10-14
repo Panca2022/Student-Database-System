@@ -255,34 +255,6 @@ Covers name, contact, email, roll number, and branch validation, plus the combin
 
 ---
 
-## 17. Interview Notes
-
-### Two-minute pitch
-
-> "The Student Database System is a Tkinter + SQLite desktop application. I refactored it from a single script into modules: config, logger, validators, db, and exporter. I added email and contact validation with regex, enforced unique roll numbers at the database level, replaced string-formatted SQL with parameterised queries to prevent SQL injection, and added logging to a file so problems can be diagnosed after the fact. I also added a CSV export feature and unit tests for the validators."
-
-### Common questions
-
-**Q: Why SQLite?**
-A: Lightweight, zero-configuration, embedded, and perfect for single-user desktop apps.
-
-**Q: How do you prevent duplicate students?**
-A: A `UNIQUE` constraint on `STU_ROLLNO`, plus `IntegrityError` handling in `db.py`.
-
-**Q: How do you prevent SQL injection?**
-A: All queries use parameterised `?` placeholders instead of string formatting.
-
-**Q: How is data validated?**
-A: Regex for email and contact; length check for name; alphanumeric check for roll number; branch must be in the allowed list.
-
-**Q: What if the database is corrupted?**
-A: Currently you would restore from a backup. A future improvement is a scheduled backup and an integrity check using `PRAGMA integrity_check`.
-
-**Q: What was the biggest change you made?**
-A: Splitting the single file into modules and adding validation. It made the app safer and testable.
-
----
-
 ## Author
 
 Refactored and extended as a demonstration of modular Python desktop application design.
