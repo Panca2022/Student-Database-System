@@ -1,240 +1,288 @@
-# Student management system Project in Python with SQLite Database
+# Student Database System
 
-**Step 1: Install Python** 
+A desktop application built with Python, Tkinter, and SQLite for managing student records. It supports adding, searching, viewing, deleting, and exporting student data through a clean graphical interface.
 
-**Step 2: Install Pycharm | Create Project | Install Library**
+---
 
-**Step 3: Create Project** 
+## Table of Contents
 
-**Step 4: Create Python file**
+1. [Project Overview](#1-project-overview)
+2. [Problem Statement](#2-problem-statement)
+3. [Objectives](#3-objectives)
+4. [Architecture](#4-architecture)
+5. [Folder Structure](#5-folder-structure)
+6. [Features](#6-features)
+7. [How It Works](#7-how-it-works)
+8. [Installation](#8-installation)
+9. [Usage](#9-usage)
+10. [Module Reference](#10-module-reference)
+11. [Why These Design Decisions](#11-why-these-design-decisions)
+12. [Reliability Engineering](#12-reliability-engineering)
+13. [Testing](#13-testing)
+14. [Observations](#14-observations)
+15. [Limitations](#15-limitations)
+16. [Future Improvements](#16-future-improvements)
+17. [Interview Notes](#17-interview-notes)
 
-**Step 5: Code Explanation**: To explain the code i have divided it different part and now i am going to explain each part one by one
+---
 
-**import library:** Here in this step we will import the needed library that will be used to create Student Management System.
-```python
-#import libraries
-from tkinter import *
-import tkinter.ttk as ttk
-import tkinter.messagebox as tkMessageBox
-import sqlite3
+## 1. Project Overview
+
+The Student Database System is a lightweight desktop application (Create, Read and Delete are implemented; Update is planned) that stores student information in a local SQLite database.
+
+It was originally a single-file Tkinter app. It has been refactored into modules with validation, logging, error handling, and export functionality.
+
+---
+
+## 2. Problem Statement
+
+Managing student data manually is time-consuming and error-prone. Duplicates, invalid emails, and lost records are common. A simple, offline, reliable desktop tool is needed for small institutions, coaching centres, or individual teachers.
+
+---
+
+## 3. Objectives
+
+- Provide a simple GUI to add, search, view, and delete student records.
+- Validate input before saving (name, contact, email, roll number, branch).
+- Prevent duplicate roll numbers.
+- Log all actions for auditing.
+- Export records to CSV.
+- Handle database errors gracefully.
+- Make the code modular, testable, and maintainable.
+
+---
+
+## 4. Architecture
+
+```text
+[ Tkinter GUI ]
+       |
+       v
+[ validators.py ]  <- clean data
+       |
+       v
+[ db.py ]          <- CRUD operations
+       |
+       v
+[ SQLite student.db ]
+       |
+       v
+[ exporter.py ]    <- CSV output
+
+[ logger.py ]  writes to student_app.log
+[ config.py ]  stores paths and rules
 ```
-Here as you can see that there are three libraries are imported in which tkinter library is using to create a GUI window , tkinter.messagebox library is using to display message in Popup box and sqlite3 library is using to handle SQLite database.
 
-**Create Database and Table:**  I have defined a function with name Database() to create database and table. Here is the following code to create database and table.
+---
 
-```python
-#function to define database
-def Database():
-    global conn, cursor
-    #creating student database
-    conn = sqlite3.connect("student.db")
-    cursor = conn.cursor()
-    #creating STUD_REGISTRATION table
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS STUD_REGISTRATION (STU_ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, STU_NAME TEXT, STU_CONTACT TEXT, STU_EMAIL TEXT, STU_ROLLNO TEXT, STU_BRANCH TEXT)")
+## 5. Folder Structure
+
+```text
+Student-Database-System-main/
+├── main.py
+├── config.py
+├── logger.py
+├── validators.py
+├── db.py
+├── exporter.py
+├── requirements.txt
+├── .gitignore
+├── README.md
+├── tests/
+│   └── test_validators.py
+└── student.db          <- created at runtime
 ```
-Here in the above program database name is  student and table name is STUD_REGISTRATION. The fields of table STUD_REGISTRATION are STU_ID , STU_NAME, STU_CONTACT, STU_EMAIL, STU_ROLLNO AND STU_BRANCH
 
-**Create GUI Window :**I have used four frame to create this Graphical user interface form in which first frame for Heading, second frame for Registration form, third frame for search window and the last frame for displaying students records. Here is the complete code to create GUI of this application.
+---
 
-```python
-#defining function for creating GUI Layout
-def DisplayForm():
-    #creating window
-    display_screen = Tk()
-    #setting width and height for window
-    display_screen.geometry("900x400")
-    #setting title for window
-    display_screen.title("SAMIR PAUL")
-    #declaring variables
-    global tree
-    global SEARCH
-    global name,contact,email,rollno,branch
-    SEARCH = StringVar()
-    name = StringVar()
-    contact = StringVar()
-    email = StringVar()
-    rollno = StringVar()
-    branch = StringVar()
-    #creating frames for layout
-    #topview frame for heading
-    TopViewForm = Frame(display_screen, width=600, bd=1, relief=SOLID)
-    TopViewForm.pack(side=TOP, fill=X)
-    #first left frame for registration from
-    LFrom = Frame(display_screen, width="350")
-    LFrom.pack(side=LEFT, fill=Y)
-    #seconf left frame for search form
-    LeftViewForm = Frame(display_screen, width=500,bg="gray")
-    LeftViewForm.pack(side=LEFT, fill=Y)
-    #mid frame for displaying students record
-    MidViewForm = Frame(display_screen, width=600)
-    MidViewForm.pack(side=RIGHT)
-    #label for heading
-    lbl_text = Label(TopViewForm, text="Student Management System", font=('verdana', 18), width=600,bg="#1C2833",fg="white")
-    lbl_text.pack(fill=X)
-    #creating registration form in first left frame
-    Label(LFrom, text="Name  ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom,font=("Arial",10,"bold"),textvariable=name).pack(side=TOP, padx=10, fill=X)
-    Label(LFrom, text="Contact ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom, font=("Arial", 10, "bold"),textvariable=contact).pack(side=TOP, padx=10, fill=X)
-    Label(LFrom, text="Email ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom, font=("Arial", 10, "bold"),textvariable=email).pack(side=TOP, padx=10, fill=X)
-    Label(LFrom, text="Rollno ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom, font=("Arial", 10, "bold"),textvariable=rollno).pack(side=TOP, padx=10, fill=X)
-    Label(LFrom, text="Branch ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom, font=("Arial", 10, "bold"),textvariable=branch).pack(side=TOP, padx=10, fill=X)
-    Button(LFrom,text="Submit",font=("Arial", 10, "bold"),command=register).pack(side=TOP, padx=10,pady=5, fill=X)
+## 6. Features
 
-    #creating search label and entry in second frame
-    lbl_txtsearch = Label(LeftViewForm, text="Enter name to Search", font=('verdana', 10),bg="gray")
-    lbl_txtsearch.pack()
-    #creating search entry
-    search = Entry(LeftViewForm, textvariable=SEARCH, font=('verdana', 15), width=10)
-    search.pack(side=TOP, padx=10, fill=X)
-    #creating search button
-    btn_search = Button(LeftViewForm, text="Search", command=SearchRecord)
-    btn_search.pack(side=TOP, padx=10, pady=10, fill=X)
-    #creating view button
-    btn_view = Button(LeftViewForm, text="View All", command=DisplayData)
-    btn_view.pack(side=TOP, padx=10, pady=10, fill=X)
-    #creating reset button
-    btn_reset = Button(LeftViewForm, text="Reset", command=Reset)
-    btn_reset.pack(side=TOP, padx=10, pady=10, fill=X)
-    #creating delete button
-    btn_delete = Button(LeftViewForm, text="Delete", command=Delete)
-    btn_delete.pack(side=TOP, padx=10, pady=10, fill=X)
-   #setting scrollbar
-    scrollbarx = Scrollbar(MidViewForm, orient=HORIZONTAL)
-    scrollbary = Scrollbar(MidViewForm, orient=VERTICAL)
-    tree = ttk.Treeview(MidViewForm,columns=("Student Id", "Name", "Contact", "Email","Rollno","Branch"),
-                        selectmode="extended", height=100, yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
-    scrollbary.config(command=tree.yview)
-    scrollbary.pack(side=RIGHT, fill=Y)
-    scrollbarx.config(command=tree.xview)
-    scrollbarx.pack(side=BOTTOM, fill=X)
-    #setting headings for the columns
-    tree.heading('Student Id', text="Student Id", anchor=W)
-    tree.heading('Name', text="Name", anchor=W)
-    tree.heading('Contact', text="Contact", anchor=W)
-    tree.heading('Email', text="Email", anchor=W)
-    tree.heading('Rollno', text="Rollno", anchor=W)
-    tree.heading('Branch', text="Branch", anchor=W)
-    #setting width of the columns
-    tree.column('#0', stretch=NO, minwidth=0, width=0)
-    tree.column('#1', stretch=NO, minwidth=0, width=100)
-    tree.column('#2', stretch=NO, minwidth=0, width=150)
-    tree.column('#3', stretch=NO, minwidth=0, width=80)
-    tree.column('#4', stretch=NO, minwidth=0, width=120)
-    tree.pack()
-    DisplayData()
+### Core Features
+
+- Add a new student
+- Search by name (partial match)
+- View all students
+- Delete selected student
+- Reset form and view
+
+### Reliability Features
+
+- Input validation (email format, contact digits, name length, branch list)
+- Unique roll number enforcement
+- Duplicate prevention at DB level
+- Parameterised SQL queries
+- Structured logging to file
+- Graceful error messages via popups
+- CSV export
+- Unit tests
+- Configurable paths
+
+---
+
+## 7. How It Works
+
+1. On startup, `main()` calls `init_db()`, creating `student.db` if missing.
+2. The GUI is built from `DisplayForm()`.
+3. When the user clicks **Submit**, `register()` runs:
+   - `validate_all()` checks every field
+   - `insert_student()` writes to SQLite
+   - Errors (like a duplicate roll number) are caught and shown
+4. **Search** filters by name using SQL `LIKE`.
+5. **Delete** asks for confirmation, then calls `delete_student_by_id()` using a parameterised query.
+6. **Export CSV** writes current records to `exports/students_export.csv`.
+7. Every action is logged to `student_app.log`.
+
+---
+
+## 8. Installation
+
+```bash
+git clone https://github.com/Panca2022/Student-Database-System.git
+cd Student-Database-System
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS / Linux
+pip install -r requirements.txt
 ```
-**Insert Data into table:** I have defined a function with name register(). First it will open database by calling Database() function. Next i have passed all the forms data into Python variable. After that i have applied a empty validation and finally at last i have applied query to insert data into table then displayed data screen by calling DisplayData() function. Here is the complete code to insert data into table.
 
-```python
-#function to insert data into database
-def register():
-    Database()
-    #getting form data
-    name1=name.get()
-    con1=contact.get()
-    email1=email.get()
-    rol1=rollno.get()
-    branch1=branch.get()
-    #applying empty validation
-    if name1=='' or con1==''or email1=='' or rol1==''or branch1=='':
-        tkMessageBox.showinfo("Warning","fill the empty field!!!")
-    else:
-        #execute query
-        conn.execute('INSERT INTO STUD_REGISTRATION (STU_NAME,STU_CONTACT,STU_EMAIL,STU_ROLLNO,STU_BRANCH) \
- VALUES (?,?,?,?,?)',(name1,con1,email1,rol1,branch1));
-        conn.commit()
-        tkMessageBox.showinfo("Message","Stored successfully")
-        #refresh table data
-        DisplayData()
-        conn.close()
-```
-**Reset Form:** I have defined a function Reset() and it will reset all the from data.
-```python
-def Reset():
-    #clear current data from table
-    tree.delete(*tree.get_children())
-    #refresh table data
-    DisplayData()
-    #clear search text
-    SEARCH.set("")
-    name.set("")
-    contact.set("")
-    email.set("")
-    rollno.set("")
-    branch.set("")
-```
-**Delete student record:** I have defined a function Delete() that will take the selected data and will delete it from database. Here is the complete code to delete selected data from database.
-```python
-def Delete():
-    #open database
-    Database()
-    if not tree.selection():
-        tkMessageBox.showwarning("Warning","Select data to delete")
-    else:
-        result = tkMessageBox.askquestion('Confirm', 'Are you sure you want to delete this record?',
-                                          icon="warning")
-        if result == 'yes':
-            curItem = tree.focus()
-            contents = (tree.item(curItem))
-            selecteditem = contents['values']
-            tree.delete(curItem)
-            cursor=conn.execute("DELETE FROM STUD_REGISTRATION WHERE STU_ID = %d" % selecteditem[0])
-            conn.commit()
-            cursor.close()
-            conn.close()
-```
-**Search student record:** I have defined a function SearchRecord() that will take the name of student and perform query to select the records of the given student and at last will populate it into the table format.
-```python
-#function to search data
-def SearchRecord():
-    #open database
-    Database()
-    #checking search text is empty or not
-    if SEARCH.get() != "":
-        #clearing current display data
-        tree.delete(*tree.get_children())
-        #select query with where clause
-        cursor=conn.execute("SELECT * FROM STUD_REGISTRATION WHERE STU_NAME LIKE ?", ('%' + str(SEARCH.get()) + '%',))
-        #fetch all matching records
-        fetch = cursor.fetchall()
-        #loop for displaying all records into GUI
-        for data in fetch:
-            tree.insert('', 'end', values=(data))
-        cursor.close()
-        conn.close()
-```
-**Display student record:** I have defined a function DisplayData() that will fetch all the records from the database and display into the GUI in table format. Here is the complete code
-```python
-#defining function to access data from SQLite database
-def DisplayData():
-    #open database
-    Database()
-    #clear current data
-    tree.delete(*tree.get_children())
-    #select query
-    cursor=conn.execute("SELECT * FROM STUD_REGISTRATION")
-    #fetch all data from database
-    fetch = cursor.fetchall()
-    #loop for displaying all data in GUI
-    for data in fetch:
-        tree.insert('', 'end', values=(data))
-    cursor.close()
-    conn.close()
-```
-**Step 6: Run Code**: To run this code just right click on the coding area and click on **Run Program** and you will get a output screen like below.
-<img width="821" alt="home" src="https://user-images.githubusercontent.com/77569653/213883145-88fc35b6-7596-4d92-b914-8ccb982b89dc.png">
+`tkinter` and `sqlite3` come with Python. Only `pytest` is an external package.
 
-**Insert**:Here just fill the Student details and click on Submit button you will get a screen like below
-<img width="821" alt="insert" src="https://user-images.githubusercontent.com/77569653/213883162-9a30a7da-c62f-4122-b4e4-49e37d773273.png">
+---
 
-**Search**: If you want to search record of any student then just fill his/her name in textbox and click on search button. For example here i am going to search student Samir's details
-<img width="824" alt="search" src="https://user-images.githubusercontent.com/77569653/213883189-99f5c42a-46cf-4b61-bd54-3a3cb354e26d.png">
+## 9. Usage
 
-**Delete**:To delete record of any student just click on record to select and the click on delete button.
-<img width="823" alt="delete" src="https://user-images.githubusercontent.com/77569653/213883206-89694686-fadd-434a-ad0d-dd75fe3bb2ce.png">
+```bash
+python main.py
+```
 
+- Click **Submit** to add a student.
+- Click any row and then **Delete** to remove it.
+- Click **Export CSV** to save records.
+
+---
+
+## 10. Module Reference
+
+| Module                     | Purpose                              |
+|----------------------------|--------------------------------------|
+| `main.py`                  | GUI and event handlers               |
+| `config.py`                | Paths, titles, validation rules      |
+| `logger.py`                | Logging configuration                |
+| `validators.py`            | Field-by-field validation            |
+| `db.py`                    | SQLite CRUD, safe queries            |
+| `exporter.py`              | CSV export                           |
+| `tests/test_validators.py` | Unit tests                           |
+
+---
+
+## 11. Why These Design Decisions
+
+**Why split the single file into modules?**
+The original `main.py` mixed GUI, validation, DB access, and business logic. Splitting into modules makes the code testable and easier to change. If you later replace SQLite with PostgreSQL, only `db.py` changes.
+
+**Why validators?**
+The original code only checked for empty strings. A user could enter "abc" as an email. Regex validation catches real mistakes.
+
+**Why parameterised queries?**
+The original `DELETE FROM STUD_REGISTRATION WHERE STU_ID = %d` used string formatting, which is an SQL injection risk. Parameterised queries (`?`) are safe.
+
+**Why UNIQUE on roll number?**
+Students should not be duplicated. Enforcing uniqueness at the database level is stronger than checking in Python.
+
+**Why logging?**
+Tkinter apps can fail silently. Logging records every insert, search, and delete. It is useful for debugging and auditing.
+
+**Why CSV export?**
+It is a natural feature for a database app and demonstrates file handling.
+
+---
+
+## 12. Reliability Engineering
+
+| Feature                  | Implementation                | Why                        |
+|--------------------------|-------------------------------|----------------------------|
+| Validation               | `validators.py`               | Prevent bad data           |
+| Duplicate prevention     | `UNIQUE` constraint           | Data integrity             |
+| SQL injection protection | Parameterised queries         | Security                   |
+| Error handling           | `try / except sqlite3.Error`  | No silent crashes          |
+| Logging                  | `logging` file handler        | Post-mortem debugging      |
+| Config                   | `config.py`                   | Single source of truth     |
+| Tests                    | `pytest`                      | Safe refactors             |
+| CSV export               | `exporter.py`                 | Data portability           |
+
+---
+
+## 13. Testing
+
+```bash
+pytest -q
+```
+
+Covers name, contact, email, roll number, and branch validation, plus the combined validator.
+
+---
+
+## 14. Observations
+
+- Most student databases fail because of duplicate entries. `UNIQUE` fixes that.
+- Input validation is the single biggest improvement. It prevents bad data from ever reaching the database.
+- Logging helps diagnose problems that don't reproduce easily.
+- Modular code is easier to extend later (for example attendance, marks, or fees).
+
+---
+
+## 15. Limitations
+
+- Single-user desktop app (SQLite is not suited to many simultaneous users).
+- No login or authentication.
+- No update/edit feature yet.
+- No pagination for very large datasets.
+- Branch list is hardcoded in `config.py`.
+
+---
+
+## 16. Future Improvements
+
+1. **Edit feature** — allow updating existing records.
+2. **Login screen** — simple user/password with hashed storage.
+3. **Pagination** — handle thousands of records.
+4. **Multi-user database** — move to PostgreSQL.
+5. **Backup button** — copy `student.db` to a dated file.
+6. **Branch list from file** — load allowed branches from JSON.
+7. **Search by roll number and branch** — currently only by name.
+8. **Import from CSV** — the reverse of export.
+9. **Packaging** — convert to `.exe` with PyInstaller.
+
+---
+
+## 17. Interview Notes
+
+### Two-minute pitch
+
+> "The Student Database System is a Tkinter + SQLite desktop application. I refactored it from a single script into modules: config, logger, validators, db, and exporter. I added email and contact validation with regex, enforced unique roll numbers at the database level, replaced string-formatted SQL with parameterised queries to prevent SQL injection, and added logging to a file so problems can be diagnosed after the fact. I also added a CSV export feature and unit tests for the validators."
+
+### Common questions
+
+**Q: Why SQLite?**
+A: Lightweight, zero-configuration, embedded, and perfect for single-user desktop apps.
+
+**Q: How do you prevent duplicate students?**
+A: A `UNIQUE` constraint on `STU_ROLLNO`, plus `IntegrityError` handling in `db.py`.
+
+**Q: How do you prevent SQL injection?**
+A: All queries use parameterised `?` placeholders instead of string formatting.
+
+**Q: How is data validated?**
+A: Regex for email and contact; length check for name; alphanumeric check for roll number; branch must be in the allowed list.
+
+**Q: What if the database is corrupted?**
+A: Currently you would restore from a backup. A future improvement is a scheduled backup and an integrity check using `PRAGMA integrity_check`.
+
+**Q: What was the biggest change you made?**
+A: Splitting the single file into modules and adding validation. It made the app safer and testable.
+
+---
+
+## Author
+
+Refactored and extended as a demonstration of modular Python desktop application design.

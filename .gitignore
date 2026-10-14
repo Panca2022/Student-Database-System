@@ -1,0 +1,20 @@
+# Database
+*.db
+*.sqlite
+
+# Logs
+*.log
+
+# Exports
+exports/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/

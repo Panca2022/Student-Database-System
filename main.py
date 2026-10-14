@@ -1,195 +1,208 @@
+import logging
+import tkinter as tk
+from tkinter import ttk, messagebox
 
-#import libraries
-from tkinter import *
-import tkinter.ttk as ttk
-import tkinter.messagebox as tkMessageBox
-import sqlite3
+from config import APP_TITLE
+from logger import setup_logging
+from validators import validate_all
+from db import (
+    init_db,
+    insert_student,
+    fetch_all_students,
+    search_students_by_name,
+    delete_student_by_id,
+)
+from exporter import export_to_csv
 
-#function to define database
-def Database():
-    global conn, cursor
-    #creating student database
-    conn = sqlite3.connect("student.db")
-    cursor = conn.cursor()
-    #creating STUD_REGISTRATION table
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS STUD_REGISTRATION (STU_ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, STU_NAME TEXT, STU_CONTACT TEXT, STU_EMAIL TEXT, STU_ROLLNO TEXT, STU_BRANCH TEXT)")
+setup_logging()
+logger = logging.getLogger(__name__)
 
-#defining function for creating GUI Layout
-def DisplayForm():
-    #creating window
-    display_screen = Tk()
-    #setting width and height for window
-    display_screen.geometry("900x400")
-    #setting title for window
-    display_screen.title("Student DataBase System")
-    global tree
-    global SEARCH
-    global name,contact,email,rollno,branch
-    SEARCH = StringVar()
-    name = StringVar()
-    contact = StringVar()
-    email = StringVar()
-    rollno = StringVar()
-    branch = StringVar()
-    #creating frames for layout
-    #topview frame for heading
-    TopViewForm = Frame(display_screen, width=600, bd=1, relief=SOLID)
-    TopViewForm.pack(side=TOP, fill=X)
-    #first left frame for registration from
-    LFrom = Frame(display_screen, width="350")
-    LFrom.pack(side=LEFT, fill=Y)
-    #seconf left frame for search form
-    LeftViewForm = Frame(display_screen, width=500,bg="gray")
-    LeftViewForm.pack(side=LEFT, fill=Y)
-    #mid frame for displaying students record
-    MidViewForm = Frame(display_screen, width=600)
-    MidViewForm.pack(side=RIGHT)
-    #label for heading
-    lbl_text = Label(TopViewForm, text="Student DataBase System", font=('Times New Roman', 18), width=600,bg="#1C2833",fg="white")
-    lbl_text.pack(fill=X)
-    #creating registration form in first left frame
-    Label(LFrom, text="Name  ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom,font=("Arial",10,"bold"),textvariable=name).pack(side=TOP, padx=10, fill=X)
-    Label(LFrom, text="Contact ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom, font=("Arial", 10, "bold"),textvariable=contact).pack(side=TOP, padx=10, fill=X)
-    Label(LFrom, text="Email ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom, font=("Arial", 10, "bold"),textvariable=email).pack(side=TOP, padx=10, fill=X)
-    Label(LFrom, text="Rollno ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom, font=("Arial", 10, "bold"),textvariable=rollno).pack(side=TOP, padx=10, fill=X)
-    Label(LFrom, text="Branch ", font=("Arial", 12)).pack(side=TOP)
-    Entry(LFrom, font=("Arial", 10, "bold"),textvariable=branch).pack(side=TOP, padx=10, fill=X)
-    Button(LFrom,text="Submit",font=("Arial", 10, "bold"),command=register).pack(side=TOP, padx=10,pady=5, fill=X)
 
-    #creating search label and entry in second frame
-    lbl_txtsearch = Label(LeftViewForm, text="Enter name to Search", font=('verdana', 10),bg="gray")
-    lbl_txtsearch.pack()
-    #creating search entry
-    search = Entry(LeftViewForm, textvariable=SEARCH, font=('verdana', 15), width=10)
-    search.pack(side=TOP, padx=10, fill=X)
-    #creating search button
-    btn_search = Button(LeftViewForm, text="Search", command=SearchRecord)
-    btn_search.pack(side=TOP, padx=10, pady=10, fill=X)
-    #creating view button
-    btn_view = Button(LeftViewForm, text="View All", command=DisplayData)
-    btn_view.pack(side=TOP, padx=10, pady=10, fill=X)
-    #creating reset button
-    btn_reset = Button(LeftViewForm, text="Reset", command=Reset)
-    btn_reset.pack(side=TOP, padx=10, pady=10, fill=X)
-    #creating delete button
-    btn_delete = Button(LeftViewForm, text="Delete", command=Delete)
-    btn_delete.pack(side=TOP, padx=10, pady=10, fill=X)
-   #setting scrollbar
-    scrollbarx = Scrollbar(MidViewForm, orient=HORIZONTAL)
-    scrollbary = Scrollbar(MidViewForm, orient=VERTICAL)
-    tree = ttk.Treeview(MidViewForm,columns=("Student Id", "Name", "Contact", "Email","Rollno","Branch"),
-                        selectmode="extended", height=100, yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
-    scrollbary.config(command=tree.yview)
-    scrollbary.pack(side=RIGHT, fill=Y)
-    scrollbarx.config(command=tree.xview)
-    scrollbarx.pack(side=BOTTOM, fill=X)
-    #setting headings for the columns
-    tree.heading('Student Id', text="Student Id", anchor=W)
-    tree.heading('Name', text="Name", anchor=W)
-    tree.heading('Contact', text="Contact", anchor=W)
-    tree.heading('Email', text="Email", anchor=W)
-    tree.heading('Rollno', text="Rollno", anchor=W)
-    tree.heading('Branch', text="Branch", anchor=W)
-    #setting width of the columns
-    tree.column('#0', stretch=NO, minwidth=0, width=0)
-    tree.column('#1', stretch=NO, minwidth=0, width=100)
-    tree.column('#2', stretch=NO, minwidth=0, width=150)
-    tree.column('#3', stretch=NO, minwidth=0, width=80)
-    tree.column('#4', stretch=NO, minwidth=0, width=120)
-    tree.pack()
-    DisplayData()
-#function to insert data into database
 def register():
-    Database()
-    #getting form data
-    name1=name.get()
-    con1=contact.get()
-    email1=email.get()
-    rol1=rollno.get()
-    branch1=branch.get()
-    #applying empty validation
-    if name1=='' or con1==''or email1=='' or rol1==''or branch1=='':
-        tkMessageBox.showinfo("Warning","fill the empty field!!!")
+    name = name_var.get()
+    contact = contact_var.get()
+    email = email_var.get()
+    rollno = rollno_var.get()
+    branch = branch_var.get()
+
+    ok, errors = validate_all(name, contact, email, rollno, branch)
+    if not ok:
+        messagebox.showwarning("Validation Error", "\n".join(errors))
+        return
+
+    success, msg = insert_student(name, contact, email, rollno, branch)
+    if success:
+        messagebox.showinfo("Success", msg)
+        Reset()
     else:
-        #execute query
-        conn.execute('INSERT INTO STUD_REGISTRATION (STU_NAME,STU_CONTACT,STU_EMAIL,STU_ROLLNO,STU_BRANCH) \
-              VALUES (?,?,?,?,?)',(name1,con1,email1,rol1,branch1));
-        conn.commit()
-        tkMessageBox.showinfo("Message","Stored successfully")
-        #refresh table data
-        DisplayData()
-        conn.close()
+        messagebox.showerror("Error", msg)
+
 
 def Reset():
-    #clear current data from table
     tree.delete(*tree.get_children())
-    #refresh table data
     DisplayData()
-    #clear search text
-    SEARCH.set("")
-    name.set("")
-    contact.set("")
-    email.set("")
-    rollno.set("")
-    branch.set("")
+    search_var.set("")
+    name_var.set("")
+    contact_var.set("")
+    email_var.set("")
+    rollno_var.set("")
+    branch_var.set("")
+
+
 def Delete():
-    #open database
-    Database()
     if not tree.selection():
-        tkMessageBox.showwarning("Warning","Select data to delete")
+        messagebox.showwarning("Warning", "Select data to delete")
+        return
+
+    confirm = messagebox.askquestion(
+        "Confirm", "Are you sure you want to delete this record?", icon="warning"
+    )
+    if confirm != "yes":
+        return
+
+    cur_item = tree.focus()
+    values = tree.item(cur_item)["values"]
+    stu_id = values[0]
+
+    success, msg = delete_student_by_id(stu_id)
+    if success:
+        tree.delete(cur_item)
+        logger.info(msg)
     else:
-        result = tkMessageBox.askquestion('Confirm', 'Are you sure you want to delete this record?',
-                                          icon="warning")
-        if result == 'yes':
-            curItem = tree.focus()
-            contents = (tree.item(curItem))
-            selecteditem = contents['values']
-            tree.delete(curItem)
-            cursor=conn.execute("DELETE FROM STUD_REGISTRATION WHERE STU_ID = %d" % selecteditem[0])
-            conn.commit()
-            cursor.close()
-            conn.close()
+        messagebox.showerror("Error", msg)
 
-#function to search data
+
 def SearchRecord():
-    #open database
-    Database()
-    #checking search text is empty or not
-    if SEARCH.get() != "":
-        #clearing current display data
-        tree.delete(*tree.get_children())
-        #select query with where clause
-        cursor=conn.execute("SELECT * FROM STUD_REGISTRATION WHERE STU_NAME LIKE ?", ('%' + str(SEARCH.get()) + '%',))
-        #fetch all matching records
-        fetch = cursor.fetchall()
-        #loop for displaying all records into GUI
-        for data in fetch:
-            tree.insert('', 'end', values=(data))
-        cursor.close()
-        conn.close()
-#defining function to access data from SQLite database
-def DisplayData():
-    #open database
-    Database()
-    #clear current data
+    if search_var.get().strip() == "":
+        return
     tree.delete(*tree.get_children())
-    #select query
-    cursor=conn.execute("SELECT * FROM STUD_REGISTRATION")
-    #fetch all data from database
-    fetch = cursor.fetchall()
-    #loop for displaying all data in GUI
-    for data in fetch:
-        tree.insert('', 'end', values=(data))
-    cursor.close()
-    conn.close()
+    for row in search_students_by_name(search_var.get().strip()):
+        tree.insert("", "end", values=tuple(row))
 
-#calling function
-DisplayForm()
-if __name__=='__main__':
-#Running Application
- mainloop()
+
+def DisplayData():
+    tree.delete(*tree.get_children())
+    for row in fetch_all_students():
+        tree.insert("", "end", values=tuple(row))
+
+
+def Export():
+    rows = fetch_all_students()
+    path = export_to_csv(rows)
+    if path:
+        messagebox.showinfo("Exported", f"Saved to {path}")
+    else:
+        messagebox.showwarning("Empty", "No records to export")
+
+
+def DisplayForm():
+    global tree, name_var, contact_var, email_var, rollno_var, branch_var, search_var
+
+    screen = tk.Tk()
+    screen.geometry("950x450")
+    screen.title(APP_TITLE)
+
+    name_var = tk.StringVar()
+    contact_var = tk.StringVar()
+    email_var = tk.StringVar()
+    rollno_var = tk.StringVar()
+    branch_var = tk.StringVar()
+    search_var = tk.StringVar()
+
+    top = tk.Frame(screen, width=600, bd=1, relief=tk.SOLID)
+    top.pack(side=tk.TOP, fill=tk.X)
+
+    left_form = tk.Frame(screen, width=350)
+    left_form.pack(side=tk.LEFT, fill=tk.Y)
+
+    left_search = tk.Frame(screen, width=500, bg="gray")
+    left_search.pack(side=tk.LEFT, fill=tk.Y)
+
+    mid = tk.Frame(screen, width=600)
+    mid.pack(side=tk.RIGHT)
+
+    tk.Label(
+        top,
+        text=APP_TITLE,
+        font=("Times New Roman", 18),
+        width=600,
+        bg="#1C2833",
+        fg="white",
+    ).pack(fill=tk.X)
+
+    for label, var in [
+        ("Name  ", name_var),
+        ("Contact ", contact_var),
+        ("Email ", email_var),
+        ("Rollno ", rollno_var),
+        ("Branch ", branch_var),
+    ]:
+        tk.Label(left_form, text=label, font=("Arial", 12)).pack(side=tk.TOP)
+        tk.Entry(
+            left_form, font=("Arial", 10, "bold"), textvariable=var
+        ).pack(side=tk.TOP, padx=10, fill=tk.X)
+
+    tk.Button(
+        left_form,
+        text="Submit",
+        font=("Arial", 10, "bold"),
+        command=register,
+    ).pack(side=tk.TOP, padx=10, pady=5, fill=tk.X)
+
+    tk.Label(
+        left_search, text="Enter name to Search", font=("verdana", 10), bg="gray"
+    ).pack()
+    tk.Entry(
+        left_search, textvariable=search_var, font=("verdana", 15), width=10
+    ).pack(side=tk.TOP, padx=10, fill=tk.X)
+
+    for text, cmd in [
+        ("Search", SearchRecord),
+        ("View All", DisplayData),
+        ("Reset", Reset),
+        ("Delete", Delete),
+        ("Export CSV", Export),
+    ]:
+        tk.Button(left_search, text=text, command=cmd).pack(
+            side=tk.TOP, padx=10, pady=10, fill=tk.X
+        )
+
+    scrollbar_x = tk.Scrollbar(mid, orient=tk.HORIZONTAL)
+    scrollbar_y = tk.Scrollbar(mid, orient=tk.VERTICAL)
+    tree = ttk.Treeview(
+        mid,
+        columns=("Student Id", "Name", "Contact", "Email", "Rollno", "Branch"),
+        selectmode="extended",
+        height=20,
+        yscrollcommand=scrollbar_y.set,
+        xscrollcommand=scrollbar_x.set,
+    )
+    scrollbar_y.config(command=tree.yview)
+    scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+    scrollbar_x.config(command=tree.xview)
+    scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
+
+    for col in ("Student Id", "Name", "Contact", "Email", "Rollno", "Branch"):
+        tree.heading(col, text=col, anchor=tk.W)
+
+    tree.column("#0", stretch=tk.NO, minwidth=0, width=0)
+    tree.column("#1", stretch=tk.NO, minwidth=0, width=90)
+    tree.column("#2", stretch=tk.NO, minwidth=0, width=150)
+    tree.column("#3", stretch=tk.NO, minwidth=0, width=110)
+    tree.column("#4", stretch=tk.NO, minwidth=0, width=180)
+    tree.column("#5", stretch=tk.NO, minwidth=0, width=90)
+    tree.column("#6", stretch=tk.NO, minwidth=0, width=90)
+    tree.pack()
+
+    DisplayData()
+    return screen
+
+
+def main():
+    init_db()
+    app = DisplayForm()
+    app.mainloop()
+
+
+if __name__ == "__main__":
+    main()
